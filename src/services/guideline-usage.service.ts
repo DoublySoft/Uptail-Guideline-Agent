@@ -62,4 +62,18 @@ export class GuidelineUsageService {
       throw new Error('Failed to fetch guideline usage');
     }
   }
+
+  /**
+   * Create a new guideline usage
+   */
+  async create(usageData: Omit<GuidelineUsage, 'id' | 'usedAt'>): Promise<GuidelineUsage> {
+    try {
+      return await this.prisma.guidelineUsage.create({
+        data: usageData
+      });
+    } catch (error) {
+      console.error('Error creating guideline usage:', error);
+      throw new Error('Failed to create guideline usage');
+    }
+  }
 }

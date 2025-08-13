@@ -1,253 +1,307 @@
 # Uptail Guidelines Agent
 
-Sistema de gestión de directrices para agentes de ventas. Proporciona acceso a las mejores prácticas y respuestas basadas en triggers y prioridades.
+A dynamic guidelines agent system for sales agents built with Next.js, Prisma, and PostgreSQL. Provides access to best practices and responses based on Parlant-style condition/action guidelines with intelligent selection and session management.
 
-## Estructura de Datos
+## 🚀 New Features
 
-### Modelos Principales
+- **Dynamic Guidelines Agent**: AI-powered sales agent with intelligent guideline selection
+- **Parlant Framework**: Condition/action-based guidelines that activate based on conversation context
+- **Multi-LLM Support**: OpenAI and Vercel AI providers with easy switching
+- **Session Management**: Automatic conversation summaries and context tracking
+- **Test Interface**: Built-in testing page at `/test-agent`
+
+## 🏗️ Architecture
+
+The system implements a scalable per-agent architecture with:
+
+- **Separation of Concerns**: API orchestration vs. business logic
+- **Service Layer**: Data access abstraction through services
+- **LLM Abstraction**: Provider-agnostic LLM interface
+- **Guideline Selection**: Dynamic selection based on conversation context
+
+## Data structure
+
+### Principal Models
 
 ```typescript
-// Directriz - Regla o guía para agentes de ventas
+// Guideline - Rule or guide for sales agents
 interface Guideline {
   id: string;
-  title: string;           // Título de la directriz
-  content: string;         // Contenido de la directriz
-  strength: 'hard' | 'soft'; // Fuerza de la directriz (obligatoria/opcional)
-  priority: number;        // Prioridad (1-10, mayor = más importante)
-  triggers: string[];      // Palabras clave que activan la directriz
-  use_once: boolean;       // Si se debe usar solo una vez por sesión
-  createdAt: Date;         // Fecha de creación
-  updatedAt: Date;         // Fecha de última actualización
+  title: string;           // Guideline title
+  content: string;         // Guideline content
+  strength: 'hard' | 'soft'; // Guideline strength (mandatory/optional)
+  priority: number;        // Priority (1-10, higher = more important)
+  triggers: string[];      // Keywords that activate the guideline
+  use_once: boolean;       // Whether it should be used only once per session
+  createdAt: Date;         // Creation date
+  updatedAt: Date;         // Last update date
 }
 ```
 
 ```typescript
-// Sesión - Conversación o interacción con un cliente
+// Session - Conversation or interaction with a client
 interface Session {
   id: string;
-  createdAt: Date;         // Fecha de inicio de la sesión
+  createdAt: Date;         // Session start date
 }
 ```
 
 ```typescript
-// Mensaje - Comunicación individual dentro de una sesión
+// Message - Individual communication within a session
 interface Message {
   id: string;
-  sessionId: string;       // ID de la sesión a la que pertenece
-  role: 'user' | 'assistant'; // Rol del emisor del mensaje
-  content: string;         // Contenido del mensaje
-  createdAt: Date;         // Fecha de creación del mensaje
+  sessionId: string;       // ID of the session it belongs to
+  role: 'user' | 'assistant'; // Role of the message sender
+  content: string;         // Message content
+  createdAt: Date;         // Message creation date
 }
 ```
 
 ```typescript
-// Uso de Directriz - Registro de cuándo se aplicó una directriz
+// Guideline Usage - Record of when a guideline was applied
 interface GuidelineUsage {
   id: string;
-  sessionId: string;       // ID de la sesión donde se usó
-  messageId: string;       // ID del mensaje donde se aplicó
-  guidelineId: string;     // ID de la directriz utilizada
-  usedAt: Date;            // Fecha y hora de uso
+  sessionId: string;       // ID of the session where it was used
+  messageId: string;       // ID of the message where it was applied
+  guidelineId: string;     // ID of the guideline used
+  usedAt: Date;            // Date and time of usage
 }
 ```
 
-### Relaciones entre Modelos
+### Model Relationships
 
-- **Session** → **Message** (1:N): Una sesión puede tener múltiples mensajes
-- **Session** → **GuidelineUsage** (1:N): Una sesión puede registrar múltiples usos de directrices
-- **Message** → **GuidelineUsage** (1:N): Un mensaje puede aplicar múltiples directrices
-- **Guideline** → **GuidelineUsage** (1:N): Una directriz puede ser usada múltiples veces
+- **Session** → **Message** (1:N): A session can have multiple messages
+- **Session** → **GuidelineUsage** (1:N): A session can record multiple guideline usages
+- **Message** → **GuidelineUsage** (1:N): A message can apply multiple guidelines
+- **Guideline** → **GuidelineUsage** (1:N): A guideline can be used multiple times
 
-### Enums y Tipos Especiales
+### Enums and Special Types
 
 ```typescript
 enum GuidelineStrength {
-  hard,  // Directriz obligatoria que debe seguirse
-  soft   // Directriz opcional o recomendación
+  hard,  // Mandatory guideline that must be followed
+  soft   // Optional guideline or recommendation
 }
 
 interface GuidelineQuery {
-  strength?: 'hard' | 'soft';      // Filtro por fuerza
-  priority_min?: number;           // Prioridad mínima
-  priority_max?: number;           // Prioridad máxima
-  triggers?: string[];             // Filtro por palabras clave
-  use_once?: boolean;              // Filtro por uso único
-  limit?: number;                  // Límite de resultados
+  strength?: 'hard' | 'soft';      // Filter by strength
+  priority_min?: number;           // Minimum priority
+  priority_max?: number;           // Maximum priority
+  triggers?: string[];             // Filter by keywords
+  use_once?: boolean;              // Filter by single use
+  limit?: number;                  // Result limit
 }
 ```
 
-## Instalación
+## 🎯 Agent Usage
 
-1. **Clonar el repositorio**
+### Quick Start
+
+1. **Test the Agent**: Navigate to `/test-agent` to interact with the sales agent
+2. **API Endpoint**: Use `POST /api/agent/respond` to integrate with your application
+3. **Configuration**: Set your LLM provider and API keys in environment variables
+
+### Example API Call
+
+```bash
+curl -X POST http://localhost:3000/api/agent/respond \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What does Uptail cost?",
+    "sessionId": "optional-session-id"
+  }'
+```
+
+### Response Format
+
+```json
+{
+  "sessionId": "session-id",
+  "reply": "I'd be happy to discuss pricing...",
+  "hardGuidelinesUsed": ["sales-hard-001"],
+  "softGuidelinesUsed": ["sales-soft-001"]
+}
+```
+
+## 🛠️ Installation
+
+1. **Clone the repository**
 
    ```bash
    git clone <repository-url>
    cd uptail-guideline-agent
    ```
 
-2. **Instalar dependencias**
+2. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-3. **Configurar base de datos con Docker**
+3. **Set up database with Docker**
 
    ```bash
-   # Iniciar PostgreSQL con Docker
+   # Start PostgreSQL with Docker
    npm run db:setup
    ```
 
-   Este comando automáticamente:
-   - Inicia el contenedor PostgreSQL
-   - Genera el cliente Prisma
-   - Ejecuta las migraciones
-   - Pobla la base de datos con datos de ejemplo
-
-4. **Configuración manual (opcional)**
+4. **Configure environment variables**
 
    ```bash
-   # Crear archivo .env.local
+   cp config.example.env .env
+   # Edit .env with your API keys and configuration
+   ```
+
+   This command automatically:
+   - Starts the PostgreSQL container
+   - Generates the Prisma client
+   - Runs migrations
+   - Populates the database with sample data
+
+5. **Manual configuration (optional)**
+
+   ```bash
+   # Create .env.local file
    cp config.example.env .env.local
    
-   # Iniciar solo la base de datos
+   # Start only the database
    npm run db:up
    
-   # Generar cliente Prisma
+   # Generate Prisma client
    npm run db:generate
    
-   # Ejecutar migraciones
+   # Run migrations
    npm run db:migrate
    
-   # Poblar con datos de ejemplo
+   # Populate with sample data
    npm run db:seed
    ```
 
-5. **Ejecutar en desarrollo**
+6. **Run in development**
 
    ```bash
    npm run dev
    ```
 
-## Uso de la API
+## API Usage
 
-### Endpoints Disponibles
+### Available Endpoints
 
 #### GET `/api/guidelines`
 
-Obtiene todas las directrices.
+Gets all guidelines.
 
 #### POST `/api/guidelines`
 
-Crea una nueva directriz.
+Creates a new guideline.
 
 **Body:**
 
 ```json
 {
-  "title": "Nueva Directriz",
-  "content": "Contenido de la directriz",
+  "title": "New Guideline",
+  "content": "Guideline content",
   "strength": "hard",
   "priority": 8,
-  "triggers": ["palabra1", "palabra2"],
+  "triggers": ["word1", "word2"],
   "use_once": false
 }
 ```
 
 #### GET `/api/guidelines/[id]`
 
-Obtiene una directriz específica por ID.
+Gets a specific guideline by ID.
 
 #### PUT `/api/guidelines/[id]`
 
-Actualiza una directriz existente.
+Updates an existing guideline.
 
 #### DELETE `/api/guidelines/[id]`
 
-Elimina una directriz.
+Deletes a guideline.
 
 #### GET `/api/guidelines/search`
 
-Busca directrices con filtros.
+Searches guidelines with filters.
 
 **Query Parameters:**
 
-- `strength`: Filtra por fuerza (`hard` o `soft`)
-- `priority_min`: Prioridad mínima (1-10)
-- `priority_max`: Prioridad máxima (1-10)
-- `triggers`: Coma separada de triggers
-- `use_once`: Filtra por directrices de uso único
-- `limit`: Número máximo de resultados
+- `strength`: Filter by strength (`hard` or `soft`)
+- `priority_min`: Minimum priority (1-10)
+- `priority_max`: Maximum priority (1-10)
+- `triggers`: Comma-separated triggers
+- `use_once`: Filter by single-use guidelines
+- `limit`: Maximum number of results
 
-**Ejemplo:**
+**Example:**
 
 ```bash
 GET /api/guidelines/search?strength=hard&priority_min=8&limit=5
 ```
 
-### Endpoints de Sesiones
+### Session Endpoints
 
 #### GET `/api/sessions`
 
-Obtiene todas las sesiones de conversación.
+Gets all conversation sessions.
 
 #### POST `/api/sessions`
 
-Crea una nueva sesión.
+Creates a new session.
 
 #### GET `/api/sessions/[id]`
 
-Obtiene una sesión específica por ID.
+Gets a specific session by ID.
 
 #### GET `/api/sessions/[id]/messages`
 
-Obtiene todos los mensajes de una sesión específica.
+Gets all messages from a specific session.
 
 #### POST `/api/sessions/[id]/messages`
 
-Crea un nuevo mensaje en una sesión específica.
+Creates a new message in a specific session.
 
 **Body:**
 
 ```json
 {
   "role": "user",
-  "content": "Mensaje del usuario"
+  "content": "User message"
 }
 ```
 
 #### GET `/api/sessions/[id]/guideline-usage`
 
-Obtiene el historial de uso de directrices en una sesión específica.
+Gets the guideline usage history in a specific session.
 
-### Endpoints de Mensajes
+### Message Endpoints
 
 #### GET `/api/messages/[messageId]/guideline-usage`
 
-Obtiene las directrices aplicadas en un mensaje específico.
+Gets the guidelines applied in a specific message.
 
-### Ejemplos de Uso
+### Usage Examples
 
 ```typescript
-// Obtener directrices de alta prioridad
+// Get high priority guidelines
 const response = await fetch('/api/guidelines/search?priority_min=8');
 const guidelines = await response.json();
 ```
 
 ```typescript
-// Obtener directrices por triggers
-const response = await fetch('/api/guidelines/search?triggers=precio,coste');
+// Get guidelines by triggers
+const response = await fetch('/api/guidelines/search?triggers=price,cost');
 const guidelines = await response.json();
 ```
 
 ```typescript
-// Crear nueva directriz
+// Create new guideline
 const newGuideline = await fetch('/api/guidelines', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    title: "Nueva Directriz",
-    content: "Contenido",
+    title: "New Guideline",
+    content: "Content",
     strength: "hard",
     priority: 9,
     triggers: ["trigger1", "trigger2"]
@@ -256,7 +310,7 @@ const newGuideline = await fetch('/api/guidelines', {
 ```
 
 ```typescript
-// Crear nueva sesión
+// Create new session
 const newSession = await fetch('/api/sessions', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' }
@@ -264,46 +318,46 @@ const newSession = await fetch('/api/sessions', {
 ```
 
 ```typescript
-// Agregar mensaje a una sesión
+// Add message to a session
 const newMessage = await fetch('/api/sessions/sessionId/messages', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     role: 'user',
-    content: 'Hola, necesito información sobre precios'
+    content: 'Hello, I need information about pricing'
   })
 });
 ```
 
 ```typescript
-// Obtener historial de directrices usadas en una sesión
+// Get guideline usage history in a session
 const usageHistory = await fetch('/api/sessions/sessionId/guideline-usage');
 const usages = await usageHistory.json();
 ```
 
-## Scripts Disponibles
+## Available Scripts
 
-### Desarrollo
+### Development
 
-- `npm run dev` - Ejecutar en modo desarrollo
-- `npm run build` - Construir para producción
-- `npm run start` - Ejecutar en modo producción
-- `npm run lint` - Ejecutar linter
+- `npm run dev` - Run in development mode
+- `npm run build` - Build for production
+- `npm run start` - Run in production mode
+- `npm run lint` - Run linter
 
-### Base de Datos
+### Database
 
-- `npm run db:setup` - Configuración completa de la base de datos
-- `npm run db:up` - Iniciar contenedor PostgreSQL
-- `npm run db:down` - Detener contenedor PostgreSQL
-- `npm run db:restart` - Reiniciar contenedor PostgreSQL
-- `npm run db:logs` - Ver logs de la base de datos
-- `npm run db:generate` - Generar cliente Prisma
-- `npm run db:migrate` - Ejecutar migraciones
-- `npm run db:seed` - Poblar base de datos
-- `npm run db:studio` - Abrir Prisma Studio
-- `npm run db:reset` - Resetear y repoblar base de datos
+- `npm run db:setup` - Complete database setup
+- `npm run db:up` - Start PostgreSQL container
+- `npm run db:down` - Stop PostgreSQL container
+- `npm run db:restart` - Restart PostgreSQL container
+- `npm run db:logs` - View database logs
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:migrate` - Run migrations
+- `npm run db:seed` - Populate database
+- `npm run db:studio` - Open Prisma Studio
+- `npm run db:reset` - Reset and repopulate database
 
-## Estructura del Proyecto
+## Project Structure
 
 ```bash
 src/
@@ -324,118 +378,118 @@ src/
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 ├── components/
-│   ├── GuidelinesList.tsx         # Lista de directrices disponibles
-│   ├── SessionsList.tsx           # Lista de sesiones de conversación
-│   ├── MessagesList.tsx           # Lista de mensajes en una sesión
-│   ├── SessionGuidelinesOverview.tsx # Resumen de directrices usadas en sesión
-│   └── GuidelineUsageDetails.tsx  # Detalles de uso de directrices
+│   ├── GuidelinesList.tsx         # List of available guidelines
+│   ├── SessionsList.tsx           # List of conversation sessions
+│   ├── MessagesList.tsx           # List of messages in a session
+│   ├── SessionGuidelinesOverview.tsx # Summary of guidelines used in session
+│   └── GuidelineUsageDetails.tsx  # Guideline usage details
 ├── services/
-│   ├── guidelines.service.ts      # Servicio para gestión de directrices
-│   ├── sessions.service.ts        # Servicio para gestión de sesiones
-│   ├── messages.service.ts        # Servicio para gestión de mensajes
-│   └── guideline-usage.service.ts # Servicio para tracking de uso
+│   ├── guidelines.service.ts      # Service for guideline management
+│   ├── sessions.service.ts        # Service for session management
+│   ├── messages.service.ts        # Service for message management
+│   └── guideline-usage.service.ts # Service for usage tracking
 ├── types/
-│   ├── guideline.ts               # Tipos para directrices
-│   ├── session.ts                 # Tipos para sesiones
-│   ├── message.ts                 # Tipos para mensajes
-│   └── guideline-usage.ts        # Tipos para uso de directrices
+│   ├── guideline.ts               # Types for guidelines
+│   ├── session.ts                 # Types for sessions
+│   ├── message.ts                 # Types for messages
+│   └── guideline-usage.ts        # Types for guideline usage
 └── prisma/
-    ├── schema.prisma              # Esquema de base de datos
-    ├── migrations/                # Migraciones de base de datos
-    └── seed.ts                    # Datos iniciales
+    ├── schema.prisma              # Database schema
+    ├── migrations/                # Database migrations
+    └── seed.ts                    # Initial data
 ```
 
-## Características del Sistema
+## System Features
 
-### Gestión de Directrices
+### Guideline Management
 
-- **Directrices Inteligentes**: Sistema de prioridades y triggers para activación automática
-- **Fuerza Configurable**: Directrices "hard" (obligatorias) y "soft" (recomendaciones)
-- **Uso Único**: Control de directrices que solo deben aplicarse una vez por sesión
-- **Búsqueda Avanzada**: Filtros por prioridad, fuerza, triggers y uso único
+- **Intelligent Guidelines**: Priority and trigger system for automatic activation
+- **Configurable Strength**: "Hard" (mandatory) and "soft" (recommendation) guidelines
+- **Single Use**: Control of guidelines that should only be applied once per session
+- **Advanced Search**: Filters by priority, strength, triggers and single use
 
-### Sistema de Sesiones
+### Session System
 
-- **Conversaciones Organizadas**: Cada interacción con un cliente se registra como sesión
-- **Historial Completo**: Seguimiento de todos los mensajes y directrices aplicadas
-- **Tracking de Uso**: Registro detallado de cuándo y cómo se aplican las directrices
+- **Organized Conversations**: Each client interaction is recorded as a session
+- **Complete History**: Tracking of all messages and applied guidelines
+- **Usage Tracking**: Detailed record of when and how guidelines are applied
 
-### API RESTful Completa
+### Complete RESTful API
 
-- **CRUD de Directrices**: Leer directrices
-- **Gestión de Sesiones**: Crear, leer, eliminar y gestionar conversaciones
-- **Sistema de Mensajes**: Intercambio de mensajes dentro de las sesiones
-- **Análisis de Uso**: Endpoints para analizar la efectividad de las directrices
+- **Guideline CRUD**: Read guidelines
+- **Session Management**: Create, read, delete and manage conversations
+- **Message System**: Message exchange within sessions
+- **Usage Analysis**: Endpoints to analyze guideline effectiveness
 
-## Base de Datos Container
+## Container Database
 
-El proyecto utiliza PostgreSQL con Docker para el almacenamiento persistente de datos.
+The project uses PostgreSQL with Docker for persistent data storage.
 
-### Configuración Docker
+### Docker Configuration
 
-- **Imagen:** PostgreSQL 15 Alpine
-- **Puerto:** 5432
-- **Base de datos:** uptail_guidelines
-- **Usuario:** uptail_user
-- **Contraseña:** uptail_password
-- **Volumen:** postgres_data (persistente)
+- **Image:** PostgreSQL 15 Alpine
+- **Port:** 5432
+- **Database:** uptail_guidelines
+- **User:** uptail_user
+- **Password:** uptail_password
+- **Volume:** postgres_data (persistent)
 
-### Migración de Datos
+### Data Migration
 
-Los datos existentes en `guidelines.json` se migran automáticamente al ejecutar `npm run db:seed`.
+Existing data in `guidelines.json` is automatically migrated when running `npm run db:seed`.
 
-## Gestión de la Base de Datos
+## Database Management
 
-### Iniciar/Detener
+### Start/Stop
 
 ```bash
-npm run db:up      # Iniciar
-npm run db:down    # Detener
-npm run db:restart # Reiniciar
+npm run db:up      # Start
+npm run db:down    # Stop
+npm run db:restart # Restart
 ```
 
-### Ver Logs
+### View Logs
 
 ```bash
 npm run db:logs
 ```
 
-### Acceso Directo
+### Direct Access
 
 ```bash
-npm run db:studio  # Interfaz web de Prisma
+npm run db:studio  # Prisma web interface
 ```
 
-### Resetear
+### Reset
 
 ```bash
-npm run db:reset   # Resetear y repoblar
+npm run db:reset   # Reset and repopulate
 ```
 
 ## Troubleshooting
 
-### Problemas de Conexión
+### Connection Issues
 
-- Verificar que Docker esté ejecutándose
-- Comprobar que el contenedor esté activo: `docker ps`
-- Verificar variables de entorno en `.env.local`
-- Revisar logs: `npm run db:logs`
+- Verify Docker is running
+- Check container is active: `docker ps`
+- Verify environment variables in `.env.local`
+- Review logs: `npm run db:logs`
 
-### Problemas de Prisma
+### Prisma Issues
 
-- Regenerar cliente: `npm run db:generate`
-- Resetear base de datos: `npm run db:reset`
-- Verificar esquema: `npm run db:studio`
+- Regenerate client: `npm run db:generate`
+- Reset database: `npm run db:reset`
+- Verify schema: `npm run db:studio`
 
-### Conflictos de Puerto
+### Port Conflicts
 
-Si el puerto 5432 está ocupado, modificar `docker-compose.yml`:
+If port 5432 is occupied, modify `docker-compose.yml`:
 
 ```yaml
 ports:
-  - "5433:5432"  # Usar puerto diferente
+  - "5433:5432"  # Use different port
 ```
 
-## Licencia
+## License
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+This project is under the MIT License. See the `LICENSE` file for more details.

@@ -33,6 +33,20 @@ export class SessionsService {
   }
 
   /**
+   * Get session by ID
+   */
+  async getById(id: string): Promise<Session | null> {
+    try {
+      return await this.prisma.session.findUnique({
+        where: { id }
+      });
+    } catch (error) {
+      console.error('Error fetching session by ID:', error);
+      throw new Error('Failed to fetch session');
+    }
+  }
+
+  /**
    * Create a new session
    */
   async create(): Promise<Session> {
@@ -43,6 +57,21 @@ export class SessionsService {
     } catch (error) {
       console.error('Error creating session:', error);
       throw new Error('Failed to create session');
+    }
+  }
+
+  /**
+   * Update session summary
+   */
+  async updateSummary(id: string, summary: string): Promise<Session> {
+    try {
+      return await this.prisma.session.update({
+        where: { id },
+        data: { summary }
+      });
+    } catch (error) {
+      console.error('Error updating session summary:', error);
+      throw new Error('Failed to update session summary');
     }
   }
 

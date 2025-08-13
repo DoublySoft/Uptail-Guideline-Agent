@@ -137,7 +137,7 @@ export default function GuidelineUsageDetails({ sessionId, selectedUsage, onClos
 
                       <div className="flex items-center justify-between text-xs text-gray-600">
                         <span>Usado el {new Date(usage.usedAt).toLocaleString()}</span>
-                        {usage.guideline?.use_once && (
+                        {usage.guideline?.singleUse && (
                           <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
                             Uso único
                           </span>

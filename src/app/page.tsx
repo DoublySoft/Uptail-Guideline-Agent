@@ -14,6 +14,7 @@ export default function Home() {
   const [selectedUsage, setSelectedUsage] = useState<GuidelineUsage | null>(null);
   const [activeTab, setActiveTab] = useState<'guidelines' | 'sessions'>('sessions');
   const [guidelineView, setGuidelineView] = useState<'chat' | 'overview'>('chat');
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const handleSessionSelect = (session: Session) => {
     setSelectedSession(session);
@@ -44,6 +45,31 @@ export default function Home() {
     setSelectedUsage(null);
   };
 
+  const handleCreateNewSession = async () => {
+    try {
+      setIsCreatingSession(true);
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Automatically select the new session
+        setSelectedSession(data.data);
+        setSelectedUsage(null);
+        setGuidelineView('chat');
+        setActiveTab('sessions');
+      } else {
+        console.error('Failed to create session:', data.error);
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
   // Mobile view states
   const showSessionsList = !selectedSession && !selectedUsage;
   const showChat = selectedSession && !selectedUsage && guidelineView === 'chat';
@@ -67,29 +93,57 @@ export default function Home() {
 
           {/* Tab Navigation */}
           <div className="mt-6">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8 justify-center">
+            <div className="flex items-center justify-between">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setActiveTab('sessions')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'sessions'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Conversaciones
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('guidelines')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'guidelines'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Directrices
+                  </button>
+                </nav>
+              </div>
+              
+              {/* Create New Session Button */}
+              {activeTab === 'sessions' && (
                 <button
-                  onClick={() => setActiveTab('sessions')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'sessions'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  onClick={handleCreateNewSession}
+                  disabled={isCreatingSession}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Conversaciones
+                  {isCreatingSession ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creando...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Nueva Sesión
+                    </>
+                  )}
                 </button>
-                <button
-                  onClick={() => setActiveTab('guidelines')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'guidelines'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Directrices
-                </button>
-              </nav>
+              )}
             </div>
           </div>
         </div>
@@ -196,17 +250,9 @@ export default function Home() {
               {/* Desktop Layout */}
               <div className="hidden lg:grid lg:grid-cols-4 gap-6 h-full p-6">
                 {/* Sessions List - Fixed height with scroll */}
-                <div className="lg:col-span-1 min-h-0">
-                  <SessionsList
-                    onSessionSelect={handleSessionSelect}
-                    selectedSessionId={selectedSession?.id}
-                  />
-                </div>
-
-                {/* Main Content Area - Takes remaining height */}
-                {selectedSession ? (
-                  <div className="lg:col-span-2 min-h-0 flex flex-col">
-                    {/* View Toggle */}
+                <div className="lg:col-span-1 min-h-0 flex flex-col">
+                  {/* View Toggle - Moved above sessions list */}
+                  {selectedSession && (
                     <div className="flex-shrink-0 mb-4 flex justify-center">
                       <div className="bg-white rounded-lg shadow-sm p-1 border border-gray-200">
                         <button
@@ -231,9 +277,22 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
+                  )}
+                  
+                  {/* Sessions List - Takes remaining height */}
+                  <div className="flex-1 min-h-0">
+                    <SessionsList
+                      onSessionSelect={handleSessionSelect}
+                      selectedSessionId={selectedSession?.id}
+                    />
+                  </div>
+                </div>
 
-                    {/* Content Area - Takes remaining height */}
-                    <div className="flex-1 min-h-0">
+                {/* Main Content Area - Takes full width to the right when no details sidebar */}
+                {selectedSession ? (
+                  <div className={`min-h-0 flex flex-col ${selectedUsage ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+                    {/* Content Area - Takes full height since switch is moved */}
+                    <div className="h-full">
                       {guidelineView === 'chat' ? (
                         <MessagesList
                           sessionId={selectedSession.id}
@@ -250,7 +309,7 @@ export default function Home() {
                     </div>
                   </div>
                 ) : (
-                  <div className="lg:col-span-2 flex items-center justify-center">
+                  <div className="lg:col-span-3 flex items-center justify-center">
                     <div className="bg-white rounded-lg shadow p-12 text-center">
                       <div className="text-gray-400 mb-4">
                         <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,16 +324,16 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Guideline Details Sidebar - Fixed height with scroll */}
-                <div className="lg:col-span-1 min-h-0">
-                  {selectedUsage && (
+                {/* Guideline Details Sidebar - Only shown when viewing details */}
+                {selectedUsage && (
+                  <div className="lg:col-span-1 min-h-0">
                     <GuidelineUsageDetails
                       sessionId={selectedSession?.id || ''}
                       selectedUsage={selectedUsage}
                       onClose={handleCloseSidebar}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

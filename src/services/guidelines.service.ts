@@ -44,8 +44,8 @@ export class GuidelinesService {
       const where: {
         strength?: GuidelineStrength;
         priority?: { gte?: number; lte?: number };
-        triggers?: { hasSome: string[] };
-        use_once?: boolean;
+        active?: boolean;
+        singleUse?: boolean;
       } = {};
 
       if (query.strength) {
@@ -60,14 +60,12 @@ export class GuidelinesService {
         };
       }
 
-      if (query.triggers && query.triggers.length > 0) {
-        where.triggers = {
-          hasSome: query.triggers
-        };
+      if (query.active !== undefined) {
+        where.active = query.active;
       }
 
-      if (query.use_once !== undefined) {
-        where.use_once = query.use_once;
+      if (query.singleUse !== undefined) {
+        where.singleUse = query.singleUse;
       }
 
       const guidelines = await this.prisma.guideline.findMany({
@@ -80,6 +78,88 @@ export class GuidelinesService {
     } catch (error) {
       console.error('Error searching guidelines:', error);
       throw new Error('Failed to search guidelines');
+    }
+  }
+
+  /**
+   * Get guidelines that haven't been used in a session
+   */
+  async getUnusedInSession(sessionId: string, strength: GuidelineStrength): Promise<Guideline[]> {
+    try {
+      const usedGuidelineIds = await this.prisma.guidelineUsage.findMany({
+        where: { sessionId },
+        select: { guidelineId: true }
+      });
+
+      const usedIds = usedGuidelineIds.map(usage => usage.guidelineId);
+
+      return await this.prisma.guideline.findMany({
+        where: {
+          strength,
+          active: true,
+          id: { notIn: usedIds }
+        },
+        orderBy: { priority: 'desc' }
+      });
+    } catch (error) {
+      console.error('Error fetching unused guidelines in session:', error);
+      throw new Error('Failed to fetch unused guidelines');
+    }
+  }
+
+  /**
+   * Evaluate if a guideline applies based on triggers
+   */
+  evaluateTriggers(guideline: Guideline, message: string): boolean {
+    try {
+      // If no triggers, always apply
+      if (!guideline.triggers || guideline.triggers.length === 0) {
+        return true;
+      }
+
+      // Check if message contains any of the trigger words
+      const messageLower = message.toLowerCase();
+      return guideline.triggers.some(trigger => 
+        messageLower.includes(trigger.toLowerCase())
+      );
+    } catch (error) {
+      console.error('Error evaluating guideline triggers:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get applicable guidelines for a given context
+   */
+  async getApplicableGuidelines(
+    sessionId: string,
+    message: string,
+    hardCount: number = 2,
+    softCount: number = 2
+  ): Promise<{ hard: Guideline[]; soft: Guideline[] }> {
+    try {
+      // Get unused guidelines by strength
+      const [unusedHard, unusedSoft] = await Promise.all([
+        this.getUnusedInSession(sessionId, 'hard'),
+        this.getUnusedInSession(sessionId, 'soft')
+      ]);
+
+      // Filter by trigger evaluation
+      const applicableHard = unusedHard
+        .filter(guideline => this.evaluateTriggers(guideline, message))
+        .slice(0, hardCount);
+
+      const applicableSoft = unusedSoft
+        .filter(guideline => this.evaluateTriggers(guideline, message))
+        .slice(0, softCount);
+
+      return {
+        hard: applicableHard,
+        soft: applicableSoft
+      };
+    } catch (error) {
+      console.error('Error getting applicable guidelines:', error);
+      throw new Error('Failed to get applicable guidelines');
     }
   }
 }

@@ -14,8 +14,9 @@ datasource db {
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  summary    String?
   
   // Relations
   messages        Message[]
@@ -25,17 +26,23 @@ model Session {
 }
 
 model Message {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   sessionId String
-  role      String   // 'user' | 'assistant'
+  role      MessageRole
   content   String
-  createdAt DateTime @default(now())
+  createdAt DateTime    @default(now())
   
   // Relations
   session        Session         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   guidelineUsages GuidelineUsage[]
   
   @@map("messages")
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
 }
 
 model GuidelineUsage {
@@ -54,15 +61,17 @@ model GuidelineUsage {
 }
 
 model Guideline {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  strength  GuidelineStrength
-  priority  Int
-  triggers  String[]
-  use_once  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String         @id @default(cuid())
+  title      String
+  content    String         // content or action part
+  strength   GuidelineStrength
+  priority   Int            @default(0)
+  triggers   String[]
+  active     Boolean        @default(true)
+  singleUse  Boolean        @default(false)
+  embedding  Bytes?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   // Relations
   guidelineUsages GuidelineUsage[]

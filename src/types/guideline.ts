@@ -5,7 +5,11 @@ export interface Guideline {
   strength: 'hard' | 'soft';
   priority: number;
   triggers: string[];
-  use_once: boolean;
+  active: boolean;
+  singleUse: boolean;
+  embedding?: Uint8Array | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface GuidelineQuery {
@@ -13,6 +17,7 @@ export interface GuidelineQuery {
   priority_min?: number;
   priority_max?: number;
   triggers?: string[];
-  use_once?: boolean;
+  active?: boolean;
+  singleUse?: boolean;
   limit?: number;
 } 

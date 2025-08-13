@@ -18,7 +18,8 @@ async function main() {
         strength: GuidelineStrength.hard,
         priority: 10,
         triggers: ["precio", "coste", "cuánto cuesta", "tarifa"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Tono",
@@ -26,7 +27,8 @@ async function main() {
         strength: GuidelineStrength.soft,
         priority: 7,
         triggers: [],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Contexto del Cliente",
@@ -34,7 +36,8 @@ async function main() {
         strength: GuidelineStrength.hard,
         priority: 9,
         triggers: ["recomendación", "sugerencia", "consejo", "qué me recomiendas"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Jerga Técnica",
@@ -42,7 +45,8 @@ async function main() {
         strength: GuidelineStrength.soft,
         priority: 6,
         triggers: ["técnico", "tecnología", "implementación", "API", "backend"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Confirmar Entendimiento",
@@ -50,7 +54,8 @@ async function main() {
         strength: GuidelineStrength.hard,
         priority: 8,
         triggers: ["proceder", "continuar", "siguiente", "avanzar"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Personalización",
@@ -58,7 +63,8 @@ async function main() {
         strength: GuidelineStrength.soft,
         priority: 7,
         triggers: ["solución", "servicio", "producto", "implementar"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Seguimiento",
@@ -66,7 +72,8 @@ async function main() {
         strength: GuidelineStrength.soft,
         priority: 6,
         triggers: ["después", "post-venta", "soporte", "mantenimiento"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Casos de Éxito",
@@ -74,7 +81,8 @@ async function main() {
         strength: GuidelineStrength.soft,
         priority: 5,
         triggers: ["ejemplos", "casos", "experiencia", "clientes"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Urgencia",
@@ -82,7 +90,8 @@ async function main() {
         strength: GuidelineStrength.hard,
         priority: 9,
         triggers: ["urgente", "rápido", "inmediato", "pronto"],
-        use_once: false
+        active: true,
+        singleUse: false
       },
       {
         title: "Objeción de Precio",
@@ -90,7 +99,8 @@ async function main() {
         strength: GuidelineStrength.hard,
         priority: 8,
         triggers: ["caro", "costoso", "no puedo pagar", "presupuesto"],
-        use_once: false
+        active: true,
+        singleUse: false
       }
     ];
     

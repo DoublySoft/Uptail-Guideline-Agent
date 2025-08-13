@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
       query.triggers = triggers.split(',').map(t => t.trim());
     }
     
-    const useOnce = searchParams.get('use_once');
-    if (useOnce) {
-      query.use_once = useOnce === 'true';
+    const singleUse = searchParams.get('singleUse');
+    if (singleUse) {
+      query.singleUse = singleUse === 'true';
     }
     
     const limit = searchParams.get('limit');

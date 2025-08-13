@@ -145,7 +145,7 @@ export default function GuidelinesList() {
 
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <div className="flex items-center space-x-2">
-                    {guideline.use_once && (
+                    {guideline.singleUse && (
                       <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
                         Uso único
                       </span>

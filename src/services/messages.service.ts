@@ -42,4 +42,20 @@ export class MessagesService {
       throw new Error('Failed to create message');
     }
   }
+
+  /**
+   * Get recent messages for a session
+   */
+  async getRecentMessages(sessionId: string, limit: number = 10): Promise<Message[]> {
+    try {
+      return await this.prisma.message.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'desc' },
+        take: limit
+      });
+    } catch (error) {
+      console.error('Error fetching recent messages:', error);
+      throw new Error('Failed to fetch recent messages');
+    }
+  }
 }
